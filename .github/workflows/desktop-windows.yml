@@ -1,0 +1,75 @@
+name: Desktop app (Windows installer)
+
+# Builds the offline desktop app for Windows and tests it on a real Windows
+# machine before packaging. The installer is attached to the run as an
+# artifact; nothing is published.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - "claude/**"
+    paths:
+      - "desktop/**"
+      - "src/**"
+      - "public/**"
+      - "*.html"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - ".github/workflows/desktop-windows.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            desktop/package-lock.json
+
+      - name: Install web app dependencies
+        run: npm ci
+
+      - name: Unit tests
+        run: npm run test:run
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Install desktop shell dependencies
+        working-directory: desktop
+        run: |
+          npm ci
+          npm install --no-save playwright
+
+      - name: Test the desktop app from source
+        working-directory: desktop
+        run: node test/e2e.cjs
+
+      - name: Build the installer
+        working-directory: desktop
+        run: npx electron-builder --win --publish never
+
+      - name: Test the packaged program
+        working-directory: desktop
+        env:
+          E2E_EXECUTABLE: ${{ github.workspace }}\desktop\release\win-unpacked\BentoPDF.exe
+        run: node test/e2e.cjs
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: BentoPDF-Windows-Installer
+          path: desktop/release/*.exe
+          if-no-files-found: error
+          retention-days: 30

@@ -16,6 +16,8 @@ This fork is hardened so the app never contacts another website. Your PDFs were 
 - **The browser enforces it**: every page carries a Content Security Policy that only allows loading from, and connecting to, the app itself. A library that tried to reach another site would be blocked. The policy is defined in `vite.config.ts`.
 - **OCR languages**: English and Afrikaans are bundled. To add another, install its data package and rebuild, for example `npm install @tesseract.js-data/deu`.
 
+- **Desktop app**: the same app also runs as a standalone Windows program that opens PDFs on double-click and saves back to the same file. See [`desktop/README.md`](desktop/README.md).
+
 To verify a build:
 
 ```bash

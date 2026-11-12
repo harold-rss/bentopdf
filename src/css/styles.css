@@ -456,3 +456,45 @@ details>summary .icon {
 details[open]>summary .icon {
     transform: rotate(45deg);
 }
+
+/* ---------------------------------------------------------------------------
+   Desktop app (see desktop/ and src/js/desktop.ts)
+   The website chrome is hidden, and an open PDF fills the window.
+   --------------------------------------------------------------------------- */
+.is-desktop body > nav,
+.is-desktop body > footer,
+.is-desktop #hero-section,
+.is-desktop #features-section,
+.is-desktop #support-section,
+.is-desktop .hide-section,
+.is-desktop .section-divider {
+    display: none !important;
+}
+
+.is-desktop.editor-open #app {
+    max-width: none;
+    min-height: 0;
+    padding: 0;
+}
+
+.is-desktop.editor-open #tool-interface {
+    max-width: none;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+}
+
+.is-desktop.editor-open #back-to-grid,
+.is-desktop.editor-open #tool-content > h2,
+.is-desktop.editor-open #tool-content > p,
+.is-desktop.editor-open #drop-zone,
+.is-desktop.editor-open #file-display-area {
+    display: none;
+}
+
+.is-desktop.editor-open #embed-pdf-wrapper {
+    height: 100vh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+}

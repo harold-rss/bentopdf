@@ -350,6 +350,10 @@ export function setupFileInputHandler(toolId) {
             const fileURL = URL.createObjectURL(file);
             state.currentPdfUrl = fileURL;
 
+            // In the desktop app, remember which file on disk this is, so Save writes back to it.
+            window.desktop?.adoptFile(file);
+            window.dispatchEvent(new CustomEvent('pdf-editor:opening', { detail: { name: file.name } }));
+
             // The editor is bundled with the app, so no code is fetched from another site.
             import('../utils/pdf-editor.js')
                 .then(({ openPdfEditor }) => openPdfEditor(pdfContainer, fileURL))
@@ -362,6 +366,7 @@ export function setupFileInputHandler(toolId) {
             const urlRevoker = () => {
                 URL.revokeObjectURL(fileURL);
                 state.currentPdfUrl = null;
+                window.dispatchEvent(new CustomEvent('pdf-editor:closed'));
                 backBtn.removeEventListener('click', urlRevoker);
             };
             backBtn.addEventListener('click', urlRevoker);

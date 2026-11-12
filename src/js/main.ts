@@ -5,6 +5,7 @@ import { createIcons, icons } from 'lucide';
 import * as pdfjsLib from 'pdfjs-dist';
 import "../css/styles.css";
 import "./fonts.js";
+import { initDesktop } from "./desktop.js";
 
 const init = () => {
     pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -115,4 +116,7 @@ const init = () => {
     console.log('Please share our tool and share the love!');
 };
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+    init();
+    initDesktop();
+});

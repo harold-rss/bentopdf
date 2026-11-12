@@ -1,0 +1,74 @@
+{
+  "name": "bentopdf-desktop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Offline desktop PDF editor (BentoPDF)",
+  "main": "main.cjs",
+  "devDependencies": {
+    "electron": "^45.3.1",
+    "electron-builder": "^26.18.0"
+  },
+  "productName": "BentoPDF",
+  "author": "BentoPDF",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "electron .",
+    "test": "node test/e2e.cjs",
+    "pack": "electron-builder --dir --publish never",
+    "dist:win": "electron-builder --win --publish never"
+  },
+  "build": {
+    "appId": "app.bentopdf.offline",
+    "productName": "BentoPDF",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "icon.png",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist",
+        "to": "web"
+      }
+    ],
+    "electronLanguages": [
+      "en-US"
+    ],
+    "fileAssociations": [
+      {
+        "ext": "pdf",
+        "name": "PDF Document",
+        "description": "PDF Document",
+        "role": "Editor"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "artifactName": "BentoPDF-Setup-${version}.${ext}"
+    },
+    "linux": {
+      "target": [
+        "dir"
+      ],
+      "icon": "icon.png",
+      "category": "Office"
+    },
+    "publish": null
+  }
+}
