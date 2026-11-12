@@ -350,18 +350,13 @@ export function setupFileInputHandler(toolId) {
             const fileURL = URL.createObjectURL(file);
             state.currentPdfUrl = fileURL;
 
-            const script = document.createElement('script');
-            script.type = 'module';
-            script.textContent = `
-                import EmbedPDF from 'https://snippet.embedpdf.com/embedpdf.js';
-                EmbedPDF.init({
-                    type: 'container',
-                    target: document.getElementById('embed-pdf-container'),
-                    src: '${fileURL}',
-                    theme: 'dark',
+            // The editor is bundled with the app, so no code is fetched from another site.
+            import('../utils/pdf-editor.js')
+                .then(({ openPdfEditor }) => openPdfEditor(pdfContainer, fileURL))
+                .catch((err) => {
+                    console.error(err);
+                    showAlert('Error', 'Could not load the PDF editor.');
                 });
-            `;
-            document.head.appendChild(script);
 
             const backBtn = document.getElementById('back-to-grid');
             const urlRevoker = () => {

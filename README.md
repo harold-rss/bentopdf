@@ -7,6 +7,29 @@
 
 ---
 
+## 🔒 Private offline build
+
+This fork is hardened so the app never contacts another website. Your PDFs were already processed in the browser; now the app's own code, fonts and data are too.
+
+- **No analytics and no social or badge embeds.**
+- **Everything is bundled**: fonts, icons, the crop tool's styles, the PDF Editor (EmbedPDF) and the OCR engine with its language data are served by the app instead of Google Fonts, unpkg, cdnjs, jsDelivr or embedpdf.com.
+- **The browser enforces it**: every page carries a Content Security Policy that only allows loading from, and connecting to, the app itself. A library that tried to reach another site would be blocked. The policy is defined in `vite.config.ts`.
+- **OCR languages**: English and Afrikaans are bundled. To add another, install its data package and rebuild, for example `npm install @tesseract.js-data/deu`.
+
+To verify a build:
+
+```bash
+npm run build
+```
+
+```bash
+npm run check:offline
+```
+
+The check opens every page and the affected tools in a real browser with outside connections blocked, and fails if anything tries to reach another host. It needs Playwright, which is not a project dependency; see the note at the top of `scripts/check-offline.mjs`. `npm run test:run` also includes guard tests that fail if a page or source file references a CDN again.
+
+---
+
 ## ✨ Why BentoPDF?
 
 -   **Privacy First**: All processing happens in your browser. Your files are never uploaded to a server, guaranteeing 100% privacy.

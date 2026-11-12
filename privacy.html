@@ -5,9 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy - BentoPDF</title>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="icon" type="image/png" href="images/favicon.svg">
     <link href="/src/css/styles.css" rel="stylesheet">
 </head>
@@ -65,25 +62,10 @@
                         function during your active session (and this is immediately discarded).</li>
                 </ul>
 
-                <h2>3. Information We May Collect (Non-Personal Data)</h2>
-                <p>To improve our website and services, we may collect anonymous, non-personally identifiable
-                    information. This type of data helps us understand how users interact with our site, which tools are
-                    most popular, and how we can improve the user experience. This includes:</p>
-                <ul>
-                    <li><strong>Usage Analytics:</strong> Anonymized data such as which tools are used, how often they
-                        are used, and which features are accessed. This is aggregated and cannot be tied back to an
-                        individual user or document.</li>
-                    <li><strong>Performance Data:</strong> Anonymized error reports or performance metrics to help us
-                        identify and fix bugs. This data contains no personal information or file content.</li>
-                </ul>
-                <p>We use privacy-respecting analytics platforms for this purpose. Specifically, we use
-                    <a href="https://simpleanalytics.com" target="_blank" rel="noopener noreferrer"
-                        class="text-indigo-400 hover:underline">Simple Analytics</a>
-                    to track anonymous visit counts. This means we can see how many users visit our site, but
-                    <strong>we never collect personal information or identify individual users</strong>.
-                    Simple Analytics is fully GDPR-compliant and respects user privacy. We do not use tracking cookies
-                    for advertising or cross-site profiling.
-                </p>
+                <h2>3. Analytics and Tracking</h2>
+                <p>This build collects nothing. It has no analytics, no cookies and no tracking of any kind. Every
+                    script, font and file it needs is served from the app itself, and the browser is instructed to
+                    block connections to any other website.</p>
 
                 <h2>4. Third-Party Libraries</h2>
                 <p>BentoPDF is built using powerful, open-source libraries like PDF-lib.js and PDF.js. These libraries
@@ -139,28 +121,15 @@
                     </ul>
                 </div>
                 <div>
-                    <h3 class="font-bold text-white mb-4">Follow Us</h3>
-                    <div class="flex justify-center md:justify-start space-x-4">
-                        <a href="https://www.instagram.com/thebentopdf/" class="text-gray-400 hover:text-indigo-400">
-                            <i data-lucide="instagram"></i>
-                        </a>
-                        <a href="https://www.linkedin.com/company/bentopdf/" class="text-gray-400 hover:text-indigo-400">
-                            <i data-lucide="linkedin"></i>
-                        </a>
-                        <a href="https://x.com/BentoPDF" class="text-gray-400 hover:text-indigo-400">
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path
-                                    d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                            </svg>
-                        </a>
-                    </div>
+                    <h3 class="font-bold text-white mb-4">Source</h3>
+                    <p class="text-gray-400 text-sm">Private offline build, based on the open-source
+                        <a href="https://github.com/alam00000/bentopdf" target="_blank" rel="noopener noreferrer"
+                            class="underline hover:text-indigo-400">BentoPDF</a> project.</p>
                 </div>
             </div>
         </div>
     </footer>
-    <script>
-        lucide.createIcons();
-    </script>
+    <script type="module" src="src/js/static-page.ts"></script>
 </body>
 
 </html>

@@ -1,4 +1,4 @@
-export const tesseractLanguages = {
+const allTesseractLanguages: Record<string, string> = {
     "eng": "English", "afr": "Afrikaans", "amh": "Amharic", "ara": "Arabic", "asm": "Assamese", "aze": "Azerbaijani",
     "aze_cyrl": "Azerbaijani - Cyrillic", "bel": "Belarusian", "ben": "Bengali", "bod": "Tibetan", "bos": "Bosnian",
     "bul": "Bulgarian", "cat": "Catalan; Valencian", "ceb": "Cebuano", "ces": "Czech", "chi_sim": "Chinese - Simplified",
@@ -20,3 +20,14 @@ export const tesseractLanguages = {
     "tgk": "Tajik", "tgl": "Tagalog", "tha": "Thai", "tir": "Tigrinya", "tur": "Turkish", "uig": "Uighur; Uyghur",
     "ukr": "Ukrainian", "urd": "Urdu", "uzb": "Uzbek", "uzb_cyrl": "Uzbek - Cyrillic", "vie": "Vietnamese", "yid": "Yiddish"
 };
+
+// Language data is bundled with the app instead of being downloaded from a CDN,
+// so only the languages installed as @tesseract.js-data/<code> packages are
+// offered. The build injects that list; see vite.config.ts.
+declare const __OCR_LANGS__: string[] | undefined;
+const bundledLanguages: string[] =
+    typeof __OCR_LANGS__ !== 'undefined' ? __OCR_LANGS__ : Object.keys(allTesseractLanguages);
+
+export const tesseractLanguages: Record<string, string> = Object.fromEntries(
+    Object.entries(allTesseractLanguages).filter(([code]) => bundledLanguages.includes(code))
+);

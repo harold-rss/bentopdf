@@ -8,6 +8,9 @@ import { icons, createIcons } from "lucide";
 
 let searchablePdfBytes: any = null;
 
+const ocrAssetUrl = (path: string) =>
+    new URL(`${import.meta.env.BASE_URL}ocr/${path}`, window.location.href).toString();
+
 
 function sanitizeTextForWinAnsi(text: string): string {
     // Remove invisible Unicode control characters (like Left-to-Right Mark U+200E)
@@ -100,7 +103,13 @@ async function runOCR() {
     document.getElementById('ocr-progress').classList.remove('hidden');
 
     try {
+        // The OCR worker, engine and language data are served from this app
+        // (see vite.config.ts) instead of being downloaded from a CDN.
         const worker = await Tesseract.createWorker(langString, 1, {
+            workerPath: ocrAssetUrl('worker.min.js'),
+            corePath: ocrAssetUrl('core'),
+            langPath: ocrAssetUrl('lang'),
+            workerBlobURL: false,
             logger: (m: any) => updateProgress(m.status, m.progress || 0)
         });
 

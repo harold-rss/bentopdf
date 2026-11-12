@@ -2,7 +2,9 @@
 import { showLoader, hideLoader, showAlert } from '../ui.js';
 import { downloadFile } from '../utils/helpers.js';
 import { state } from '../state.js';
-import heic2any from 'heic2any';
+// heic-to's "csp" build decodes HEIC without eval(), which the app's
+// Content Security Policy forbids (heic2any needs it).
+import { heicTo } from 'heic-to/csp';
 import { PDFDocument as PDFLibDocument } from 'pdf-lib';
 
 export async function heicToPdf() {
@@ -14,11 +16,7 @@ export async function heicToPdf() {
     try {
         const pdfDoc = await PDFLibDocument.create();
         for (const file of state.files) {
-            const conversionResult = await heic2any({
-                blob: file,
-                toType: "image/png",
-            });
-            const pngBlob = Array.isArray(conversionResult) ? conversionResult[0] : conversionResult;
+            const pngBlob = await heicTo({ blob: file, type: 'image/png' });
             const pngBytes = await pngBlob.arrayBuffer();
             
             const pngImage = await pdfDoc.embedPng(pngBytes);
