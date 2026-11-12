@@ -118,6 +118,11 @@ async function drawRectangle(page, area) {
         await page.screenshot({ path: path.join(shotsDir, `${name}.png`) });
     };
 
+    // CI screens can be small, and the editor folds toolbar tabs away when
+    // the window is narrow. Zooming out keeps every tab visible.
+    const zoomOut = () =>
+        app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach((w) => w.webContents.setZoomFactor(0.6)));
+
     const pageErrors = [];
     const win = await app.firstWindow();
     win.on('pageerror', (err) => pageErrors.push(err.message.split('\n')[0]));
@@ -156,6 +161,8 @@ async function drawRectangle(page, area) {
 
         console.log('Editing and saving');
         await check('drawing on the page marks the document as changed', async () => {
+            await zoomOut();
+            await win.waitForTimeout(800);
             await drawRectangle(win, pageArea());
             await until(async () => (await titleOf()).startsWith('• '), 'unsaved-changes marker in the title');
             await shot(win, '2-rectangle');
@@ -213,6 +220,8 @@ async function drawRectangle(page, area) {
             const page2 = (await app.windows()).find((w) => w !== win);
             const area = page2.locator('#embed-pdf-container canvas, #embed-pdf-container img').first();
             await area.waitFor({ state: 'visible', timeout: 60000 });
+            await zoomOut();
+            await page2.waitForTimeout(800);
             await drawRectangle(page2, area);
             await until(async () => (await titleOf(1)).startsWith('• '), 'unsaved-changes marker');
             // Answer the "Save changes?" prompt with "Save".
