@@ -18,9 +18,9 @@ const shotsDir = process.env.E2E_SCREENSHOTS;
 const failures = [];
 const notes = [];
 
-let chromium;
+let android;
 try {
-    ({ chromium } = require('playwright'));
+    ({ _android: android } = require('playwright'));
 } catch {
     console.error('Playwright is not installed: npm i --no-save playwright');
     process.exit(2);
@@ -128,13 +128,11 @@ function pollSockets() {
         shell(`am start -W -a android.intent.action.VIEW -d file:///data/local/tmp/sample-contract.pdf -t application/pdf -n ${PKG}/.MainActivity`);
     });
 
-    const pid = await until(() => shell(`pidof ${PKG}`), 'the app process', 30000);
-    adb('forward', 'tcp:9333', `localabstract:webview_devtools_remote_${pid}`);
-    const browser = await until(() => chromium.connectOverCDP('http://127.0.0.1:9333'), 'the web view debugger', 45000);
-    const page = await until(() => {
-        const pages = browser.contexts().flatMap((c) => c.pages());
-        return pages.find((p) => p.url().startsWith('https://localhost'));
-    }, 'the app page', 30000);
+    // Playwright's Android mode talks to the app's web view through adb.
+    const [device] = await android.devices();
+    if (!device) throw new Error('no Android device found by Playwright');
+    const webView = await device.webView({ pkg: PKG }, { timeout: 45000 });
+    const page = await webView.page();
     const pageErrors = [];
     page.on('pageerror', (err) => pageErrors.push(err.message.split('\n')[0]));
     const policy = [];
@@ -274,7 +272,7 @@ function pollSockets() {
     });
     console.log(`  info  sockets owned by the app during the test: ${sockets.size}`);
 
-    await browser.close().catch(() => {});
+    await device.close().catch(() => {});
     for (const note of notes) console.log(`  note  ${note}`);
     if (failures.length) {
         console.error(`\n${failures.length} problem(s) found.`);
