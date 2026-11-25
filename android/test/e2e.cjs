@@ -53,6 +53,7 @@ async function check(name, fn) {
         const message = String(err && err.message ? err.message : err).split('\n')[0];
         failures.push(`${name}: ${message}`);
         console.log(`  FAIL  ${name}: ${message}`);
+        dumpDiagnostics(name);
     }
 }
 
@@ -61,6 +62,27 @@ function screenshot(name) {
     fs.mkdirSync(shotsDir, { recursive: true });
     const png = execFileSync('adb', ['exec-out', 'screencap', '-p'], { maxBuffer: 64 * 1024 * 1024 });
     fs.writeFileSync(path.join(shotsDir, `${name}.png`), png);
+}
+
+// On failure: what Android logged about the app and its web view.
+function dumpDiagnostics(label) {
+    try {
+        const pidNow = spawnSync('adb', ['shell', `pidof ${PKG}`], { encoding: 'utf8' }).stdout.trim();
+        console.log(`\n--- diagnostics (${label}) - app pid now: ${pidNow || 'not running'} ---`);
+        const log = execFileSync('adb', ['logcat', '-d', '-v', 'brief'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+        const interesting = log
+            .split('\n')
+            .filter((l) => /bentopdf|chromium|cr_|Capacitor|AndroidRuntime|FATAL|ActivityManager.*(Process|Kill|died)|lowmemorykiller|WebView|crash/i.test(l))
+            .slice(-120);
+        console.log(interesting.join('\n'));
+        if (shotsDir) {
+            fs.mkdirSync(shotsDir, { recursive: true });
+            fs.writeFileSync(path.join(shotsDir, 'logcat.txt'), log);
+        }
+        screenshot(`failure-${label.replace(/\W+/g, '-')}`);
+    } catch (err) {
+        console.log(`(could not collect diagnostics: ${err.message})`);
+    }
 }
 
 // --- Socket watcher: reads /proc/net/{tcp,tcp6,udp,udp6} for the app's uid.
@@ -123,6 +145,7 @@ function pollSockets() {
     shell('chmod 644 /data/local/tmp/sample-contract.pdf');
     shell('rm -f "/sdcard/Download/sample-contract.pdf"');
 
+    spawnSync('adb', ['logcat', '-c']);
     console.log('Opening');
     await check('"Open with" starts the app with the PDF', async () => {
         shell(`am start -W -a android.intent.action.VIEW -d file:///data/local/tmp/sample-contract.pdf -t application/pdf -n ${PKG}/.MainActivity`);
@@ -162,18 +185,8 @@ function pollSockets() {
         screenshot('1-opened');
     });
     if (!openedViaIntent) {
-        // Keep testing the rest with the same PDF handed over directly.
-        notes.push('The emulator could not hand the file to the app via file://; the rest of the test opened it directly.');
-        const b64 = fs.readFileSync(sample).toString('base64');
-        await page.evaluate((data) => {
-            document.querySelector('.tool-card[data-tool-id="edit"]').click();
-            const dt = new DataTransfer();
-            dt.items.add(new File([Uint8Array.from(atob(data), (c) => c.charCodeAt(0))], 'sample-contract.pdf', { type: 'application/pdf' }));
-            const fileInput = document.getElementById('file-input');
-            fileInput.files = dt.files;
-            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-        }, b64);
-        await page.waitForSelector('#embed-pdf-container canvas, #embed-pdf-container img', { timeout: 45000 }).catch(() => {});
+        console.error(`\n${failures.length} problem(s) found. Stopping: the rest of the test needs the PDF open.`);
+        process.exit(1);
     }
 
     console.log('Privacy');
@@ -281,6 +294,7 @@ function pollSockets() {
     console.log('\nAll Android checks passed.');
 })().catch((err) => {
     console.error(err);
+    dumpDiagnostics('unexpected error');
     if (socketWatch) clearInterval(socketWatch);
     process.exit(1);
 });
