@@ -18,6 +18,7 @@
     "build:docker": "vite build"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
     "@testing-library/dom": "^10.4.1",
     "@types/blob-stream": "^0.1.33",
     "@types/html2canvas": "^0.5.35",
@@ -35,6 +36,9 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.2",
     "@embedpdf/snippet": "^2.15.1",
     "@fontsource/dancing-script": "^5.3.0",
     "@fontsource/dm-sans": "^5.3.0",

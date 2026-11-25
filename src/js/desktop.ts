@@ -51,7 +51,7 @@ function editorIsOpen() {
 }
 
 /** Opens a PDF handed over by the shell (double-click, File > Open) in the editor. */
-function openInEditor(file: DesktopFile) {
+export function openInEditor(file: { name: string; data: Uint8Array }) {
     setupToolInterface('edit');
     const input = document.getElementById('file-input') as HTMLInputElement | null;
     if (!input) return;
@@ -102,7 +102,7 @@ export async function initDesktop() {
     const desktop = window.desktop;
     if (!desktop) return;
     const root = document.documentElement;
-    root.classList.add('is-desktop');
+    root.classList.add('is-desktop', 'is-app');
 
     window.addEventListener('pdf-editor:opening', (event) => {
         documentName = (event as CustomEvent).detail?.name || 'document.pdf';

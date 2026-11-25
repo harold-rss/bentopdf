@@ -458,43 +458,87 @@ details[open]>summary .icon {
 }
 
 /* ---------------------------------------------------------------------------
-   Desktop app (see desktop/ and src/js/desktop.ts)
-   The website chrome is hidden, and an open PDF fills the window.
+   Desktop and Android apps (see desktop/, android/, src/js/desktop.ts and
+   src/js/mobile.ts). The website chrome is hidden, and an open PDF fills
+   the window.
    --------------------------------------------------------------------------- */
-.is-desktop body > nav,
-.is-desktop body > footer,
-.is-desktop #hero-section,
-.is-desktop #features-section,
-.is-desktop #support-section,
-.is-desktop .hide-section,
-.is-desktop .section-divider {
+.is-app body > nav,
+.is-app body > footer,
+.is-app #hero-section,
+.is-app #features-section,
+.is-app #support-section,
+.is-app .hide-section,
+.is-app .section-divider {
     display: none !important;
 }
 
-.is-desktop.editor-open #app {
+.is-app.editor-open #app {
     max-width: none;
     min-height: 0;
     padding: 0;
 }
 
-.is-desktop.editor-open #tool-interface {
+.is-app.editor-open #tool-interface {
     max-width: none;
     padding: 0;
     border: 0;
     border-radius: 0;
 }
 
-.is-desktop.editor-open #back-to-grid,
-.is-desktop.editor-open #tool-content > h2,
-.is-desktop.editor-open #tool-content > p,
-.is-desktop.editor-open #drop-zone,
-.is-desktop.editor-open #file-display-area {
+.is-app.editor-open #back-to-grid,
+.is-app.editor-open #tool-content > h2,
+.is-app.editor-open #tool-content > p,
+.is-app.editor-open #drop-zone,
+.is-app.editor-open #file-display-area {
     display: none;
 }
 
-.is-desktop.editor-open #embed-pdf-wrapper {
+.is-app.editor-open #embed-pdf-wrapper {
     height: 100vh;
+    height: 100dvh;
     margin: 0;
     border: 0;
     border-radius: 0;
+}
+
+/* Android: a slim bar above the editor with Back and Save. */
+#app-editor-bar {
+    display: none;
+}
+
+.is-android.editor-open #app-editor-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 48px;
+    padding: 0 0.5rem;
+    background: #1f2937;
+    border-bottom: 1px solid #374151;
+}
+
+.is-android.editor-open #embed-pdf-wrapper {
+    height: calc(100vh - 48px);
+    height: calc(100dvh - 48px);
+}
+
+.is-android #app,
+.is-android #tool-interface {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+}
+
+#app-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 1.5rem;
+    transform: translateX(-50%);
+    z-index: 60;
+    max-width: calc(100vw - 2rem);
+    padding: 0.6rem 1rem;
+    border-radius: 0.5rem;
+    background: #111827;
+    border: 1px solid #4f46e5;
+    color: #e5e7eb;
+    font-size: 0.9rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
 }

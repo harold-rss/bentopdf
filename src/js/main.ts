@@ -6,6 +6,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import "../css/styles.css";
 import "./fonts.js";
 import { initDesktop } from "./desktop.js";
+import { initMobile } from "./mobile.js";
 
 const init = () => {
     pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -119,4 +120,5 @@ const init = () => {
 document.addEventListener('DOMContentLoaded', () => {
     init();
     initDesktop();
+    initMobile();
 });

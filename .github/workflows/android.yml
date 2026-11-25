@@ -1,0 +1,109 @@
+name: Android app (APK)
+
+# Builds the offline Android app, checks the APK asks for no network
+# permission, tests it on an Android emulator, and attaches the APK to the
+# run as an artifact. Nothing is published.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - "claude/**"
+    paths:
+      - "android/**"
+      - "src/**"
+      - "public/**"
+      - "*.html"
+      - "capacitor.config.json"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - "desktop/verify/sample-contract.pdf"
+      - ".github/workflows/android.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install web app dependencies
+        run: npm ci
+
+      - name: Unit tests
+        run: npm run test:run
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Copy the web app into the Android project
+        run: npx cap sync android
+
+      - name: Build the APK
+        working-directory: android
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Check the APK asks for no permissions
+        run: |
+          AAPT2=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          "$AAPT2" dump permissions "$APK" | tee permissions.txt
+          if grep -E "uses-permission.*(INTERNET|NETWORK|WIFI)" permissions.txt; then
+            echo "::error::The APK requests a network permission"; exit 1
+          fi
+          mkdir -p out
+          cp "$APK" out/BentoPDF-0.1.0.apk
+          ls -la out
+
+      - name: Enable hardware acceleration for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install the test driver
+        run: npm install --no-save playwright
+
+      - name: Test on an Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          E2E_SCREENSHOTS: ${{ github.workspace }}/android-screenshots
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: node android/test/e2e.cjs out/BentoPDF-0.1.0.apk
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-test-screenshots
+          path: android-screenshots
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BentoPDF-Android-APK
+          path: out/BentoPDF-0.1.0.apk
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,23 @@
+{
+  "appId": "app.bentopdf.offline",
+  "appName": "BentoPDF",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": false
+  },
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": false
+    },
+    "CapacitorCookies": {
+      "enabled": false
+    },
+    "SystemBars": {
+      "style": "DARK"
+    }
+  }
+}
