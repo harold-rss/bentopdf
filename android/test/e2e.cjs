@@ -266,6 +266,11 @@ function pollSockets() {
         screenshot('5-ocr');
     });
 
+    await check('the app does not use Google Play Services\' font provider', async () => {
+        const log = execFileSync('adb', ['logcat', '-d', '-v', 'brief'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+        const hits = log.split('\n').filter((l) => /bentopdf.*FontsProvider|FontsProvider.*bentopdf|EmojiCompat/i.test(l));
+        if (hits.length) throw new Error(hits.slice(0, 3).join(' | '));
+    });
     await check('no script errors or security-policy violations', async () => {
         const all = [...pageErrors, ...policy];
         if (all.length) throw new Error(all.join(' | '));
