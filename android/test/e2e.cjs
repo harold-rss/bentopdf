@@ -242,11 +242,16 @@ function pollSockets() {
             const list = shell('ls /sdcard/Download/ 2>/dev/null');
             return list.split('\n').find((f) => /^sample-contract.*\.pdf$/.test(f.trim()));
         }, 'the saved file in Downloads', 20000);
+        // The Save dialog creates the file empty; the app then writes it.
         const local = path.join(require('node:os').tmpdir(), 'bentopdf-saved.pdf');
-        adb('pull', `/sdcard/Download/${saved.trim()}`, local);
-        const bytes = fs.readFileSync(local);
-        if (bytes.subarray(0, 5).toString() !== '%PDF-') throw new Error('saved file is not a PDF');
-        if (bytes.length < 1000) throw new Error(`saved PDF is only ${bytes.length} bytes`);
+        const bytes = await until(() => {
+            adb('pull', `/sdcard/Download/${saved.trim()}`, local);
+            const data = fs.readFileSync(local);
+            return data.length > 1000 && data.subarray(0, 5).toString() === '%PDF-' ? data : null;
+        }, 'the saved file to contain the PDF', 20000);
+        if (!bytes.toString('latin1').includes('SAMPLE SERVICE AGREEMENT') && !/\/FlateDecode/.test(bytes.toString('latin1'))) {
+            throw new Error('saved PDF does not look like the opened document');
+        }
         await sleep(1000);
         screenshot('3-saved');
     });
