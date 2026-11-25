@@ -19,5 +19,6 @@
     "SystemBars": {
       "style": "DARK"
     }
-  }
+  },
+  "loggingBehavior": "none"
 }

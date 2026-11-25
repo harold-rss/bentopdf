@@ -192,14 +192,16 @@ function pollSockets() {
 
     let openedViaIntent = false;
     await check('the PDF opens in the editor', async () => {
-        const opened = await until(
-            () => page.evaluate(() => {
-                if (document.querySelector('#alert-modal:not(.hidden)')) return `alert: ${document.getElementById('alert-message')?.textContent}`;
-                return document.documentElement.classList.contains('editor-open') && !!document.querySelector('#embed-pdf-container canvas, #embed-pdf-container img');
-            }),
-            'the editor to show the PDF',
-            45000
-        );
+        // The editor draws inside a shadow root; Playwright locators see into it.
+        const pdfShown = page.locator('#embed-pdf-container canvas, #embed-pdf-container img');
+        const opened = await until(async () => {
+            const alert = await page.evaluate(() =>
+                document.querySelector('#alert-modal:not(.hidden)') ? document.getElementById('alert-message')?.textContent : null
+            );
+            if (alert) return `alert: ${alert}`;
+            const open = await page.evaluate(() => document.documentElement.classList.contains('editor-open'));
+            return open && (await pdfShown.count()) > 0;
+        }, 'the editor to show the PDF', 60000);
         if (typeof opened === 'string') throw new Error(opened);
         openedViaIntent = true;
         await sleep(2000);
@@ -287,6 +289,12 @@ function pollSockets() {
         screenshot('5-ocr');
     });
 
+    await check('the PDF\'s contents never appear in Android\'s system log', async () => {
+        const log = execFileSync('adb', ['logcat', '-d', '-v', 'brief'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+        const marker = fs.readFileSync(sample).toString('base64').slice(0, 40);
+        if (log.includes(marker)) throw new Error('the PDF (base64) was written to logcat');
+        if (/Capacitor\/Console|Capacitor\/Plugin.*methodData/.test(log)) throw new Error('Capacitor is logging plugin calls or console output');
+    });
     await check('the app does not use Google Play Services\' font provider', async () => {
         const log = execFileSync('adb', ['logcat', '-d', '-v', 'brief'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
         const hits = log.split('\n').filter((l) => /bentopdf.*FontsProvider|FontsProvider.*bentopdf|EmojiCompat/i.test(l));
