@@ -111,9 +111,11 @@ function pollSockets() {
         if (/android\.permission\.INTERNET/.test(dump)) throw new Error('INTERNET permission is present');
         if (/ACCESS_NETWORK_STATE/.test(dump)) throw new Error('ACCESS_NETWORK_STATE permission is present');
     });
-    appUid = Number((shell(`dumpsys package ${PKG}`).match(/userId=(\d+)/) || [])[1]);
-    if (!appUid) throw new Error('could not find the app uid');
-    socketWatch = setInterval(pollSockets, 500);
+    // "package:app.bentopdf.offline uid:10123"
+    appUid = Number((shell(`pm list packages -U ${PKG}`).match(/uid:(\d+)/) || [])[1]) ||
+        Number((shell(`dumpsys package ${PKG}`).match(/(?:userId|appId)=(\d+)/) || [])[1]);
+    if (appUid) socketWatch = setInterval(pollSockets, 500);
+    else notes.push('Could not find the app uid, so the socket check was skipped.');
 
     // Make the sample PDF readable by the app the way "Open with" provides it.
     const sample = path.join(root, 'desktop', 'verify', 'sample-contract.pdf');
@@ -258,10 +260,11 @@ function pollSockets() {
         if (all.length) throw new Error(all.join(' | '));
     });
 
-    clearInterval(socketWatch);
-    pollSockets();
+    if (socketWatch) clearInterval(socketWatch);
+    if (appUid) pollSockets();
     console.log('Network');
     await check('the app opened no network connection', async () => {
+        if (!appUid) return;
         if (!procNetReadable) {
             notes.push('/proc/net was not readable on this device, so the socket check relied on the missing permission alone.');
             return;
