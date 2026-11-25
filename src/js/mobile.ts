@@ -150,10 +150,28 @@ function addEditorBar() {
     toolInterface.prepend(bar);
 }
 
+// The PDF libraries need a recent Android System WebView (Chrome 119+).
+// Phones update it through the Play Store; very old ones may not have.
+const MIN_WEBVIEW = 119;
+
+function webViewVersion(): number {
+    const match = navigator.userAgent.match(/Chrome\/(\d+)/);
+    return match ? Number(match[1]) : 0;
+}
+
 export async function initMobile() {
     if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return;
     const root = document.documentElement;
     root.classList.add('is-app', 'is-android');
+
+    const version = webViewVersion();
+    if (version && version < MIN_WEBVIEW) {
+        showAlert(
+            'Update needed',
+            `This phone's "Android System WebView" is version ${version}. BentoPDF needs version ${MIN_WEBVIEW} or newer to open PDFs. ` +
+                'Update "Android System WebView" (and "Google Chrome", if installed) in the Play Store, then reopen BentoPDF.'
+        );
+    }
 
     routeDownloadsToSaveDialog();
     addEditorBar();

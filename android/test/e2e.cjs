@@ -53,7 +53,7 @@ async function check(name, fn) {
         const message = String(err && err.message ? err.message : err).split('\n')[0];
         failures.push(`${name}: ${message}`);
         console.log(`  FAIL  ${name}: ${message}`);
-        dumpDiagnostics(name);
+        await dumpDiagnostics(name);
     }
 }
 
@@ -64,15 +64,19 @@ function screenshot(name) {
     fs.writeFileSync(path.join(shotsDir, `${name}.png`), png);
 }
 
+// Set once the app page is attached; prints what the page shows.
+let pageState = async () => {};
+
 // On failure: what Android logged about the app and its web view.
-function dumpDiagnostics(label) {
+async function dumpDiagnostics(label) {
+    await pageState();
     try {
         const pidNow = spawnSync('adb', ['shell', `pidof ${PKG}`], { encoding: 'utf8' }).stdout.trim();
         console.log(`\n--- diagnostics (${label}) - app pid now: ${pidNow || 'not running'} ---`);
         const log = execFileSync('adb', ['logcat', '-d', '-v', 'brief'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
         const interesting = log
             .split('\n')
-            .filter((l) => /bentopdf|chromium|cr_|Capacitor|AndroidRuntime|FATAL|ActivityManager.*(Process|Kill|died)|lowmemorykiller|WebView|crash/i.test(l))
+            .filter((l) => /bentopdf|Capacitor|chromium|AndroidRuntime|FATAL/i.test(l) && !/AppsFilter|NamespaceManager|velour|gsa/i.test(l))
             .slice(-120);
         console.log(interesting.join('\n'));
         if (shotsDir) {
@@ -156,6 +160,23 @@ function pollSockets() {
     if (!device) throw new Error('no Android device found by Playwright');
     const webView = await device.webView({ pkg: PKG }, { timeout: 45000 });
     const page = await webView.page();
+    const consoleLines = [];
+    page.on('console', (msg) => consoleLines.push(`[${msg.type()}] ${msg.text().slice(0, 300)}`));
+    pageState = async () => {
+        try {
+            const state = await page.evaluate(() => ({
+                ua: navigator.userAgent,
+                classes: document.documentElement.className,
+                tool: document.querySelector('#tool-content h2')?.textContent,
+                alert: document.querySelector('#alert-modal:not(.hidden)') ? document.getElementById('alert-message')?.textContent : null,
+                editorChildren: document.getElementById('embed-pdf-container')?.childElementCount ?? null,
+            }));
+            console.log('page state:', JSON.stringify(state));
+        } catch (err) {
+            console.log(`(page state unavailable: ${err.message.split('\n')[0]})`);
+        }
+        console.log('last console messages:\n' + consoleLines.slice(-40).join('\n'));
+    };
     const pageErrors = [];
     page.on('pageerror', (err) => pageErrors.push(err.message.split('\n')[0]));
     const policy = [];
@@ -297,9 +318,9 @@ function pollSockets() {
         process.exit(1);
     }
     console.log('\nAll Android checks passed.');
-})().catch((err) => {
+})().catch(async (err) => {
     console.error(err);
-    dumpDiagnostics('unexpected error');
     if (socketWatch) clearInterval(socketWatch);
+    await dumpDiagnostics('unexpected error');
     process.exit(1);
 });
