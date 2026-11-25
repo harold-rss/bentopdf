@@ -109,6 +109,8 @@ async function runOCR() {
             workerPath: ocrAssetUrl('worker.min.js'),
             corePath: ocrAssetUrl('core'),
             langPath: ocrAssetUrl('lang'),
+            // Served uncompressed: Android's build tools drop .gz assets.
+            gzip: false,
             workerBlobURL: false,
             logger: (m: any) => updateProgress(m.status, m.progress || 0)
         });

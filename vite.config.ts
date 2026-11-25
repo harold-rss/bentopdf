@@ -2,7 +2,8 @@ import { defineConfig, type Plugin } from 'vite';
 import tailwindcss from '@tailwindcss/vite'
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
-import { existsSync, readdirSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
+import { gunzipSync } from 'zlib';
 import { resolve } from 'path';
 
 // ---------------------------------------------------------------------------
@@ -28,6 +29,29 @@ const cspDirectives = (extraConnectSrc = '') => [
 ].join('; ');
 
 export const contentSecurityPolicy = cspDirectives();
+
+// OCR language data is served uncompressed (ocr/lang/<code>.traineddata):
+// Android's build tools drop .gz files from an app's assets.
+const ocrLanguageDataPlugin = (): Plugin => {
+  const load = (lang: string) =>
+    gunzipSync(readFileSync(resolve(ocrDataDir, lang, '4.0.0_best_int', `${lang}.traineddata.gz`)));
+  return {
+    name: 'ocr-language-data',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const match = req.url?.match(/\/ocr\/lang\/([a-z_]+)\.traineddata$/);
+        if (!match || !ocrLanguages.includes(match[1])) return next();
+        res.setHeader('Content-Type', 'application/octet-stream');
+        res.end(load(match[1]));
+      });
+    },
+    generateBundle() {
+      for (const lang of ocrLanguages) {
+        this.emitFile({ type: 'asset', fileName: `ocr/lang/${lang}.traineddata`, source: load(lang) });
+      }
+    },
+  };
+};
 
 // Vite's dev server needs a websocket for hot reload.
 const devContentSecurityPolicy = cspDirectives(' ws://localhost:* ws://127.0.0.1:*');
@@ -67,6 +91,7 @@ export default defineConfig({
   },
   plugins: [
     contentSecurityPolicyPlugin(),
+    ocrLanguageDataPlugin(),
     // Serve the OCR worker, engine and language data from the app itself.
     viteStaticCopy({
       targets: [
@@ -78,11 +103,6 @@ export default defineConfig({
         {
           src: 'node_modules/tesseract.js-core/tesseract-core*.wasm.js',
           dest: 'ocr/core',
-          rename: { stripBase: true },
-        },
-        {
-          src: 'node_modules/@tesseract.js-data/*/4.0.0_best_int/*.traineddata.gz',
-          dest: 'ocr/lang',
           rename: { stripBase: true },
         },
       ],
