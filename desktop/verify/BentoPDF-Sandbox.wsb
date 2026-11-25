@@ -1,0 +1,15 @@
+<Configuration>
+  <!-- Internet stays on, so BentoPDF could go online if it tried. -->
+  <Networking>Enable</Networking>
+  <MappedFolders>
+    <MappedFolder>
+      <!-- Put the installer, the scripts and a test PDF in this folder. -->
+      <HostFolder>C:\BentoPDF-Test</HostFolder>
+      <SandboxFolder>C:\BentoPDF-Test</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+  <LogonCommand>
+    <Command>powershell.exe -NoExit -ExecutionPolicy Bypass -File C:\BentoPDF-Test\Start-SandboxTest.ps1</Command>
+  </LogonCommand>
+</Configuration>

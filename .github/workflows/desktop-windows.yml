@@ -66,6 +66,39 @@ jobs:
           E2E_EXECUTABLE: ${{ github.workspace }}\desktop\release\win-unpacked\BentoPDF.exe
         run: node test/e2e.cjs
 
+      - name: Check the installed-style program with the Windows network watcher
+        shell: powershell
+        run: |
+          $exe = "${{ github.workspace }}\desktop\release\win-unpacked\BentoPDF.exe"
+          & .\desktop\verify\Watch-BentoPDF.ps1 -Launch -ExePath $exe -PdfPath .\desktop\verify\sample-contract.pdf -Seconds 30
+          if ($LASTEXITCODE -ne 0) { throw "Network watcher reported a problem (exit code $LASTEXITCODE)" }
+
+      - name: Check the firewall script adds and removes its rules
+        shell: powershell
+        run: |
+          $exe = "${{ github.workspace }}\desktop\release\win-unpacked\BentoPDF.exe"
+          & .\desktop\verify\Block-BentoPDF-Network.ps1 -ExePath $exe
+          $rules = @(Get-NetFirewallRule -Group 'BentoPDF offline' | Where-Object { $_.Action -eq 'Block' -and $_.Enabled -eq 'True' })
+          if ($rules.Count -ne 2) { throw "Expected 2 blocking rules, found $($rules.Count)" }
+          & .\desktop\verify\Block-BentoPDF-Network.ps1 -Remove
+          if (@(Get-NetFirewallRule -Group 'BentoPDF offline' -ErrorAction SilentlyContinue).Count -ne 0) { throw 'Rules were not removed' }
+
+      - name: Assemble the test kit
+        shell: powershell
+        run: |
+          $kit = "${{ runner.temp }}\BentoPDF-Test"
+          New-Item -ItemType Directory -Force -Path $kit | Out-Null
+          Copy-Item desktop\release\*.exe $kit
+          Copy-Item desktop\verify\* $kit
+
+      - name: Upload the test kit
+        uses: actions/upload-artifact@v4
+        with:
+          name: BentoPDF-Windows-Test-Kit
+          path: ${{ runner.temp }}/BentoPDF-Test
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Upload the installer
         uses: actions/upload-artifact@v4
         with:

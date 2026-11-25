@@ -10,6 +10,10 @@ The **Desktop app (Windows installer)** workflow builds it. Open the repository'
 - It installs for the current user only and needs no administrator rights.
 - To make it the default for PDFs: right-click any PDF, choose **Open with > Choose another app**, pick **BentoPDF**, and select **Always**.
 
+## Checking it yourself
+
+`verify/` has three independent checks that use only Windows' own tools: a disposable Windows Sandbox run, a network watcher for your own PC, and a Windows Firewall rule that blocks the program outright. See [`verify/README.md`](verify/README.md). The **BentoPDF-Windows-Test-Kit** artifact bundles them with the installer.
+
 ## Using it
 
 | Action | How |
